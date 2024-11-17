@@ -223,7 +223,7 @@ ggplot(dtcm, aes(x = geno, y = emmean, fill = riego)) +
 
 ```
 
-#Análisis multivariado
+# Análisis multivariado
 
 ```{r}
 str (fb)
@@ -264,6 +264,115 @@ list(p1, p2) %>%
 
 
 ```
+
+# Graficos en ggplot2
+## Data cruda
+### Box plot
+```{r}
+
+p1 <- fb %>% 
+  ggplot(data = ., aes(x = geno, y = hi, fill = riego)) +
+   geom_boxplot() +
+  labs(x = "Genotipos"
+       , y = "Indice de cosecha"
+       , fill = "Tratamiento" 
+       , title ="Eficiencia de uso de agua en papa"
+       , subtitle = "Indice de cosecha"
+       , caption = "n = 150", 
+       ) +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+p1
+
+```
+
+## Scater plot
+```{r}
+
+p2 <- fb %>% 
+  ggplot(data = .
+         , aes(x = twue, y = hi, color = riego)) +
+  geom_point() +
+  geom_smooth(method = lm) +
+    labs(x = "Efiencia de uso de agua de tuberculo"
+       , y = "Indice de cosecha"
+       , color = "Tratamiento" 
+       , title ="Eficiencia de uso de agua en papa"
+       , subtitle = "Indice de cosecha vs Efiencia de uso de agua de tuberculo"
+       , caption = "n = 150", 
+       ) +
+  theme_bw()
+
+p2
+
+```
+
+## Datos Resumidos
+```{r}
+modelo <- lm(lfa ~  bloque + riego*geno
+          , data = fb)
+
+anova(modelo)
+
+library(agricolae)
+
+tukey <- HSD.test(modelo
+                  , c("geno", "riego")
+                  , group = TRUE)
+
+grupos <- tukey_result$groups %>% 
+  rownames_to_column("tratamientos") %>% 
+  separate(tratamientos, into = c("geno", "riego")
+           , sep = ":")
+```
+```{r}
+p3 <- grupos %>% 
+  ggplot(data = .
+         , aes(x = geno, y = lfa, fill = riego)) +
+  geom_col(position = position_dodge2(preserve = "single"))
+
+p3
+```
+
+```{r}
+library(psych)
+
+p4 <- function() {
+  
+    fb %>% 
+  select_if(is.numeric) %>% 
+  dplyr::select(!c("block")) %>% 
+  pairs.panels(x = .
+               , hist.col="red"
+               , pch = 21
+               , stars = TRUE
+               , scale = FALSE
+               , lm = TRUE
+               ) 
+}
+  
+p4
+
+```
+# Imagenes in grids
+```{r}
+library(cowplot)
+
+plot <- list(p1, p2, p3, p4) %>% 
+  plot_grid(plotlist = .
+            , ncol = 2
+            , labels = "auto"
+            )
+
+ggsave2(filename = "plot-01.jpg", units = "cm"
+        , width = 30*2, height = 15*2.5)
+
+include_graphics("plot-01.jpg")
+
+```
+
+
 
 
 
